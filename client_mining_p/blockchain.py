@@ -113,7 +113,7 @@ class Blockchain(object):
         guess = f'{block_string}{proof}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
 
-        return guess_hash[:DIFFICULTY] == "0" * DIFFICULTY
+        return guess_hash[:3] == "000"
 
 # Instantiate our Node
 app = Flask(__name__)
@@ -127,17 +127,44 @@ blockchain = Blockchain()
 
 @app.route('/mine', methods=['POST'])
 def mine():
-    data = request.get_json()
-    if data['id'] and data['proof']:
-        previous_hash = blockchain.hash(blockchain.last_block)
-        blockchain.new_block(data['proof'], previous_hash)
+    # TODO: Handle non json request
+    values = request.get_json()
 
-        return jsonify({ 'message': "Success!" }), 201
-    else:
-        response = {
-            'message': 'Failed to POST to /mine'
-        }
+    required = ['proof', 'id']
+    if not all(key in values for key in required):
+        response = {'message': "Missing values"}
         return jsonify(response), 400
+
+    submitted_proof = values['proof']
+
+    block_string = json.dumps(blockchain.last_block, sort_keys=True)
+
+    if blockchain.valid_proof(block_string, submitted_proof):
+        previous_hash = blockchain.hash(blockchain.last_block)
+        block = blockchain.new_block(submitted_proof, previous_hash)
+
+        response = {
+            'new_block': block
+        }
+
+        return jsonify(response), 200
+
+    else:
+        # TODO: Better messaging for late vs invalid proof
+        response = {
+            'message': "Proof was invalid or late"
+        }
+
+        return jsonify(response), 200
+
+    # if values['id'] and values['proof']:
+
+    #     return jsonify({ 'message': "Success!" }), 201
+    # else:
+    #     response = {
+    #         'message': 'Failed to POST to /mine'
+    #     }
+    #     return jsonify(response), 400
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
@@ -148,7 +175,7 @@ def full_chain():
     return jsonify(response), 200
 
 @app.route('/last_block', methods=['GET'])
-def last_block():
+def return_last_block():
     response = {
         'last_block': blockchain.last_block,
     }
