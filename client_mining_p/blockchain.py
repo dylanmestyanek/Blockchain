@@ -91,12 +91,12 @@ class Blockchain(object):
     #     in an effort to find a number that is a valid proof
     #     :return: A valid proof for the provided block
     #     """
-    #     block_string = json.dumps(self.last_block, sort_keys=True)
-    #     proof = 0
-    #     while self.valid_proof(block_string, proof) is False:
-    #         proof += 1
+        # block_string = json.dumps(self.last_block, sort_keys=True)
+        # proof = 0
+        # while self.valid_proof(block_string, proof) is False:
+        #     proof += 1
         
-    #     return proof
+        # return proof
 
     @staticmethod
     def valid_proof(block_string, proof):
@@ -144,6 +144,13 @@ def full_chain():
     response = {
         'length': len(blockchain.chain),
         'chain': blockchain.chain
+    }
+    return jsonify(response), 200
+
+@app.route('/last_block', methods=['GET'])
+def last_block():
+    response = {
+        'last_block': blockchain.last_block,
     }
     return jsonify(response), 200
 
